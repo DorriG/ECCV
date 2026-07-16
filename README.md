@@ -1,14 +1,14 @@
 # Multimodal Ambivalence and Hesitancy Recognition with Bidirectional Audio--Text Cross-Attention
 
-这个目录实现了一个本地训练版的 audio+text 双模态分类模型：
+This directory implements a locally trainable audio+text bimodal classification model:
 
-- text：使用 Hugging Face BERT，默认 `bert-base-multilingual-cased`
-- audio：使用 wav2vec2，默认 `facebook/wav2vec2-base`
-- fusion：先把两个模态投影到同一维度，再用双向 cross-attention 对齐文本 token 和音频帧特征
-- target：二分类，`0 = No A-H`，`1 = A-H`
-- metrics：输出 `CL_ACC`、`CONFUSION_MATRIX`、`F1_POS`、`F1_NEG`、`W_F1`、`MACRO_F1`、`Average_precision_POS`
+- text: uses Hugging Face BERT, default `bert-base-multilingual-cased`
+- audio: uses wav2vec2, default `facebook/wav2vec2-base`
+- fusion: projects both modalities into the same dimension, then uses bidirectional cross-attention to align text tokens with audio-frame features
+- target: binary classification, `0 = No A-H`, `1 = A-H`
+- metrics: outputs `CL_ACC`, `CONFUSION_MATRIX`, `F1_POS`, `F1_NEG`, `W_F1`, `MACRO_F1`, `Average_precision_POS`
 
-## 目录结构
+## Directory Structure
 
 ```text
 fusion/
@@ -17,61 +17,34 @@ fusion/
   pyproject.toml
   scripts/train_default.sh
   fusion/
-    dataset.py      # 读取 split/*.txt，映射 Videos/*.mp4 到 audios/*.wav
+    dataset.py      # Reads split/*.txt and maps Videos/*.mp4 to audios/*.wav
     model.py        # BERT + wav2vec2 + bidirectional cross-attention
-    engine.py       # 训练、验证、保存 checkpoint 和 predictions
-    metrics.py      # BAH/CASP 对齐指标
-    train.py        # 训练入口
-    evaluate.py     # checkpoint 评估入口
-```
-
-## 安装
-
-建议在本目录安装：
-
-```bash
+    engine.py       # Training, validation, checkpoint saving, and predictions
+    metrics.py      # BAH/CASP-aligned metrics
+    train.py        # Training entry point
+    evaluate.py     # Checkpoint evaluation entry point
+Installation
+It is recommended to install from this directory:
 cd /home/.../fusion
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 pip install -e .
-```
-
-如果你已有可用环境，也可以只执行：
-
-```bash
+If you already have a working environment, you can also run only:
 cd /home/.../fusion
 pip install -r requirements.txt
-```
-
-## 数据格式
-
-默认读取：
-
-```text
+Data Format
+By default, the code reads:
 /home/.../data/split/train.txt
 /home/.../data/split/val.txt
 /home/.../data/split/test.txt
 /home/.../data/audios
-```
-
-每行格式：
-
-```text
+Each line should follow this format:
 Videos/.../xxx_Video.mp4,label,transcript
-```
-
-代码会自动把 `Videos/.../xxx_Video.mp4` 映射为：
-
-```text
+The code will automatically map Videos/.../xxx_Video.mp4 to:
 data/audios/.../xxx_Video.wav
-```
-
-## 快速训练
-
-从 `fusion` 目录运行：
-
-```bash
+Quick Training
+Run from the fusion directory:
 python -m fusion.train \
   --data_root ../data \
   --output_dir outputs/bert_wav2vec_cross_attn \
@@ -80,17 +53,9 @@ python -m fusion.train \
   --eval_batch_size 4 \
   --auto_resume \
   --max_audio_seconds 30
-```
-
-也可以直接运行脚本：
-
-```bash
+You can also run the script directly:
 bash scripts/train_default.sh
-```
-
-默认冻结 BERT 和 wav2vec2 编码器，只训练投影层、cross-attention 和分类头。这通常更省显存，也适合先确认 pipeline。想微调最后几层可以加：
-
-```bash
+By default, the BERT and wav2vec2 encoders are frozen, and only the projection layers, cross-attention module, and classification head are trained. This usually saves GPU memory and is suitable for verifying the pipeline first. To fine-tune the last few layers, add:
 python -m fusion.train \
   --data_root ../data \
   --output_dir outputs/finetune_last2 \
@@ -98,19 +63,10 @@ python -m fusion.train \
   --unfreeze_audio_layers 2 \
   --encoder_lr 1e-5 \
   --lr 3e-4
-```
-
-如果显存紧张，可以降低：
-
-```bash
+If GPU memory is limited, you can reduce:
 --batch_size 1 --eval_batch_size 1 --max_audio_seconds 15 --gradient_accumulation_steps 4
-```
-
-## 输出文件
-
-训练完成后，`output_dir` 包含：
-
-```text
+Output Files
+After training finishes, output_dir contains:
 best_model.pt
 last_checkpoint.pt
 last_loaded_best_model.pt
@@ -123,15 +79,9 @@ metrics_test.csv
 predictions_test.csv
 tokenizer/
 audio_feature_extractor/
-```
-
-`predictions_test.csv` 会包含 sample id、视频路径、音频路径、真实标签、预测标签、A-H 概率和 logits。
-
-## 断点续训
-
-训练每个 epoch 结束后会保存 `last_checkpoint.pt`，里面包含模型、optimizer、scheduler、AMP scaler、已完成 epoch、best 指标和 history。服务器断开后，用同一个 `output_dir` 重新启动并加 `--auto_resume` 即可从最近一个完整 epoch 后继续：
-
-```bash
+predictions_test.csv includes the sample ID, video path, audio path, ground-truth label, predicted label, A-H probability, and logits.
+Resume Training
+After each epoch, last_checkpoint.pt is saved. It contains the model, optimizer, scheduler, AMP scaler, completed epoch, best metric, and history. If the server disconnects, restart with the same output_dir and add --auto_resume to continue from the most recent completed epoch:
 python -m fusion.train \
   --data_root ../data \
   --output_dir outputs/bert_wav2vec_cross_attn \
@@ -139,49 +89,33 @@ python -m fusion.train \
   --batch_size 4 \
   --eval_batch_size 4 \
   --auto_resume
-```
-
-也可以显式指定 checkpoint：
-
-```bash
+You can also explicitly specify a checkpoint:
 python -m fusion.train \
   --data_root ../data \
   --output_dir outputs/bert_wav2vec_cross_attn \
   --epochs 10 \
   --resume outputs/bert_wav2vec_cross_attn/last_checkpoint.pt
-```
-
-如果想从头重新训练，请换一个新的 `--output_dir`，或者不要加 `--auto_resume`。
-
-## 单独评估 checkpoint
-
-```bash
+If you want to retrain from scratch, use a new --output_dir, or do not add --auto_resume.
+Evaluate a Checkpoint Separately
 python -m fusion.evaluate \
   --checkpoint outputs/bert_wav2vec_cross_attn/best_model.pt \
   --data_root ../data \
   --output_dir outputs/bert_wav2vec_cross_attn/eval_test
-```
-
-## 常用参数
-
-- `--text_model`：BERT 模型名，默认 `bert-base-multilingual-cased`
-- `--audio_model`：wav2vec2 模型名，默认 `facebook/wav2vec2-base`
-- `--max_text_length`：BERT 最大 token 数，默认 256
-- `--max_audio_seconds`：每条音频最多送入 wav2vec 的秒数，默认 30
-- `--train_audio_crop`：训练音频裁剪方式，默认 `random`
-- `--eval_audio_crop`：验证/测试音频裁剪方式，默认 `center`
-- `--class_weight`：默认 `balanced`，用于类别不平衡时的交叉熵权重
-- `--metric_for_best`：保存 best checkpoint 的验证指标，默认 `MACRO_F1`
-- `--mixed_precision`：CUDA 上启用 AMP
-- `--auto_resume`：如果 `output_dir/last_checkpoint.pt` 存在，自动断点续训
-- `--resume`：显式指定一个 checkpoint 继续训练
-- `--limit_train/--limit_val/--limit_test`：小样本 smoke test
-
-## Smoke Test
-
-先用极小样本检查数据、模型和输出目录：
-
-```bash
+Common Arguments
+--text_model: BERT model name, default bert-base-multilingual-cased
+--audio_model: wav2vec2 model name, default facebook/wav2vec2-base
+--max_text_length: maximum number of BERT tokens, default 256
+--max_audio_seconds: maximum audio duration sent into wav2vec for each sample, default 30
+--train_audio_crop: audio cropping strategy for training, default random
+--eval_audio_crop: audio cropping strategy for validation/testing, default center
+--class_weight: default balanced, used as cross-entropy weights for class imbalance
+--metric_for_best: validation metric used to save the best checkpoint, default MACRO_F1
+--mixed_precision: enables AMP on CUDA
+--auto_resume: automatically resumes training if output_dir/last_checkpoint.pt exists
+--resume: explicitly specifies a checkpoint to resume training from
+--limit_train/--limit_val/--limit_test: small-sample smoke test
+Smoke Test
+First, use a tiny sample set to check the data, model, and output directory:
 python -m fusion.train \
   --data_root ../data \
   --output_dir outputs/smoke \
@@ -192,6 +126,5 @@ python -m fusion.train \
   --limit_train 4 \
   --limit_val 2 \
   --limit_test 2
+The first run will download the BERT and wav2vec2 weights from Hugging Face. If the server cannot access the internet, cache the models in advance and use --cache_dir to point to the cache directory.
 ```
-
-第一次运行会从 Hugging Face 下载 BERT 和 wav2vec2 权重；如果服务器不能联网，请提前把模型缓存好，并用 `--cache_dir` 指向缓存目录。
