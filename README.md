@@ -6,9 +6,7 @@
 - audio：使用 wav2vec2，默认 `facebook/wav2vec2-base`
 - fusion：先把两个模态投影到同一维度，再用双向 cross-attention 对齐文本 token 和音频帧特征
 - target：二分类，`0 = No A-H`，`1 = A-H`
-- metrics：输出 `CL_ACC`、`CONFUSION_MATRIX`、`F1_POS`、`F1_NEG`、`W_F1`、`MACRO_F1`、`Average_precision_POS`，并额外给出 CASP 风格的 `CASP_ACC2` 和 `CASP_F1_WEIGHTED`
-
-CASP 原仓库 README 主要规定了训练流程和 PyTorch 环境；其代码里的二分类评价核心是 `Accuracy` 和 weighted `F1 score`。BAH 数据已有 zero-shot 代码使用的指标命名更细，所以这里同时保留 BAH 指标名和 CASP 风格字段。
+- metrics：输出 `CL_ACC`、`CONFUSION_MATRIX`、`F1_POS`、`F1_NEG`、`W_F1`、`MACRO_F1`、`Average_precision_POS`
 
 ## 目录结构
 
