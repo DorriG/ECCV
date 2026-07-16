@@ -30,7 +30,7 @@ fusion/
 建议在本目录安装：
 
 ```bash
-cd /home/dorri/dorri_workshop/12_eccv/fusion
+cd /home/.../fusion
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -40,7 +40,7 @@ pip install -e .
 如果你已有可用环境，也可以只执行：
 
 ```bash
-cd /home/dorri/dorri_workshop/12_eccv/fusion
+cd /home/.../fusion
 pip install -r requirements.txt
 ```
 
