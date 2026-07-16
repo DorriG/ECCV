@@ -51,10 +51,10 @@ pip install -r requirements.txt
 默认读取：
 
 ```text
-/home/dorri/dorri_workshop/12_eccv/data/split/train.txt
-/home/dorri/dorri_workshop/12_eccv/data/split/val.txt
-/home/dorri/dorri_workshop/12_eccv/data/split/test.txt
-/home/dorri/dorri_workshop/12_eccv/data/audios
+/home/.../data/split/train.txt
+/home/.../data/split/val.txt
+/home/.../data/split/test.txt
+/home/.../data/audios
 ```
 
 每行格式：
