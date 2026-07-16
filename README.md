@@ -1,4 +1,4 @@
-# BERT + wav2vec Cross-Attention Fusion for BAH A/H Classification
+# Multimodal Ambivalence and Hesitancy Recognition with Bidirectional Audio--Text Cross-Attention
 
 这个目录实现了一个本地训练版的 audio+text 双模态分类模型：
 
